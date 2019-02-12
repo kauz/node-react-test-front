@@ -1,8 +1,19 @@
 import React, { Component } from 'react';
+import axios from 'axios';
 import logo from './logo.svg';
 import './App.css';
 
 class App extends Component {
+
+  componentDidMount() {
+    axios.get('http://localhost:3000/cars').then(res => {
+      if(res.status === 200) {
+        console.log(res.data);
+        this.setState(() => ({ data: res.data }));
+      }
+    });
+  }
+
   render() {
     return (
       <div className="App">

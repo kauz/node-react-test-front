@@ -27,9 +27,7 @@ class Cars extends Component {
     }).then(res => {
       if (res.status === 200) {
         this.setState(() => ({cars: res.data}));
-        if (Object.keys(this.state.selected).length === 0 && this.state.selected.constructor === Object) {
-          this.setState(() => ({filter: this.filter()}));
-        }
+        this.setState({filter: this.filter()});
       }
     }).catch(function (error) {
       console.error(error);
@@ -80,7 +78,12 @@ class Cars extends Component {
       }
     });
 
-    return {manufacturer: manufacturer.sort(), year: year.sort((a, b) => a - b), model: model.sort(), color: color.sort()};
+    return {
+      manufacturer: manufacturer.sort(),
+      year: year.sort((a, b) => a - b),
+      model: model.sort(),
+      color: color.sort()
+    };
   }
 
   handleChange = name => event => {
@@ -89,20 +92,18 @@ class Cars extends Component {
   };
 
   clearFilters() {
-    this.setState(this.baseState);
-    this.state.selected = {};
+    this.state.selected = {color: "", model: "", manufacturer: "", year: ""};
     this.getCars();
-    this.render();
   }
 
   render() {
 
-    return (this.state.cars.length && this.state.filter ?
-      <Fragment>
+    return (this.state.filter
+      ? <Fragment>
         <form className={'Filters'}>
           <FormControl className={'Filter'}>
             <InputLabel disableAnimation shrink htmlFor="manufacturer-native-simple">Manufacturer</InputLabel>
-            <Select native onChange={this.handleChange('manufacturer')}
+            <Select native value={this.state.selected.manufacturer} onChange={this.handleChange('manufacturer')}
                     inputProps={{
                       name: 'manufacturer',
                       id: 'manufacturer-native-simple',
@@ -117,7 +118,7 @@ class Cars extends Component {
 
           <FormControl className={'Filter'}>
             <InputLabel disableAnimation shrink htmlFor="model-native-simple">Model</InputLabel>
-            <Select native onChange={this.handleChange('model')}
+            <Select native value={this.state.selected.model} onChange={this.handleChange('model')}
                     inputProps={{
                       name: 'model',
                       id: 'model-native-simple',
@@ -132,7 +133,7 @@ class Cars extends Component {
 
           <FormControl className={'Filter'}>
             <InputLabel disableAnimation shrink htmlFor="year-native-simple">Year</InputLabel>
-            <Select native onChange={this.handleChange('year')}
+            <Select native value={this.state.selected.year} onChange={this.handleChange('year')}
                     inputProps={{
                       name: 'year',
                       id: 'year-native-simple',
@@ -147,7 +148,7 @@ class Cars extends Component {
 
           <FormControl className={'Filter'}>
             <InputLabel disableAnimation shrink htmlFor="color-native-simple">Color</InputLabel>
-            <Select native onChange={this.handleChange('color')}
+            <Select native value={this.state.selected.color} onChange={this.handleChange('color')}
                     inputProps={{
                       name: 'color',
                       id: 'color-native-simple',
@@ -161,14 +162,16 @@ class Cars extends Component {
           </FormControl>
 
           <FormControl className={'Filter Filter-Button'}>
-            <Button onClick={() => { this.clearFilters() }} color={'primary'} variant={'contained'}>Clear</Button>
+            <Button onClick={() => {
+              this.clearFilters()
+            }} color={'primary'} variant={'contained'}>Clear</Button>
           </FormControl>
         </form>
-        <div className='Cars'>
-          {this.renderCars()}
-        </div>
-      </Fragment>
-      : <div> No data </div>);
+        {this.state.cars.length
+          ? <div className='Cars'>{this.renderCars()}</div>
+          : <div>No data</div>}
+        </Fragment>
+      : <div>Loading...</div>);
   }
 }
 

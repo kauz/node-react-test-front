@@ -16,22 +16,39 @@ class Cars extends Component {
   }
 
   getCars() {
-    axios.get('http://localhost:3000/cars', {
-      params: {
-        country: this.state.selected.country || '',
-        manufacturer: this.state.selected.manufacturer || '',
-        model: this.state.selected.model || '',
-        year: this.state.selected.year || '',
-        color: this.state.selected.color || ''
+    let cars = this.baseState.cars;
+
+    if (cars.length) {
+      let selected = this.state.selected;
+
+      for (let key in selected) {
+        if (selected[key].length) {
+          cars = cars.filter(car => car[key] === selected[key]);
+        }
       }
-    }).then(res => {
-      if (res.status === 200) {
-        this.setState(() => ({cars: res.data}));
-        this.setState({filter: this.filter()});
-      }
-    }).catch(function (error) {
-      console.error(error);
-    });
+
+      let filtered = this.filter(cars);
+      this.setState(() => ({cars: cars}));
+      this.setState(() => ({filter: filtered}));
+    } else {
+      axios.get('http://localhost:3000/cars', {
+        params: {
+          country: this.state.selected.country || '',
+          manufacturer: this.state.selected.manufacturer || '',
+          model: this.state.selected.model || '',
+          year: this.state.selected.year || '',
+          color: this.state.selected.color || ''
+        }
+      }).then(res => {
+        if (res.status === 200) {
+          this.setState(() => ({cars: res.data}));
+          this.baseState.cars = res.data;
+          this.setState({filter: this.filter()});
+        }
+      }).catch(function (error) {
+        console.error(error);
+      });
+    }
   }
 
   renderCars() {
@@ -49,13 +66,15 @@ class Cars extends Component {
     });
   }
 
-  filter() {
+  filter(cars) {
     let manufacturer = [];
     let year = [];
     let model = [];
     let color = [];
 
-    this.state.cars.forEach(function (obj) {
+    let state = cars || this.state.cars;
+
+    state.forEach(function (obj) {
       let i = manufacturer.findIndex(x => x === obj.manufacturer);
       let j = year.findIndex(x => x === obj.year);
       let k = model.findIndex(x => x === obj.model);
@@ -170,7 +189,7 @@ class Cars extends Component {
         {this.state.cars.length
           ? <div className='Cars'>{this.renderCars()}</div>
           : <div>No data</div>}
-        </Fragment>
+      </Fragment>
       : <div>Loading...</div>);
   }
 }

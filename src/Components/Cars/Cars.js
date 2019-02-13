@@ -12,43 +12,43 @@ class Cars extends Component {
   }
 
   componentDidMount() {
-    this.getCars({});
+    this.fetchCars();
   }
 
-  getCars() {
+  getCarsList() {
     let cars = this.baseState.cars;
 
-    if (cars.length) {
-      let selected = this.state.selected;
+    let selected = this.state.selected;
 
-      for (let key in selected) {
-        if (selected[key].length) {
-          cars = cars.filter(car => car[key] === selected[key]);
-        }
+    for (let key in selected) {
+      if (selected[key].length) {
+        cars = cars.filter(car => car[key] === selected[key]);
       }
-
-      let filtered = this.filter(cars);
-      this.setState(() => ({cars: cars}));
-      this.setState(() => ({filter: filtered}));
-    } else {
-      axios.get('http://localhost:3000/cars', {
-        params: {
-          country: this.state.selected.country || '',
-          manufacturer: this.state.selected.manufacturer || '',
-          model: this.state.selected.model || '',
-          year: this.state.selected.year || '',
-          color: this.state.selected.color || ''
-        }
-      }).then(res => {
-        if (res.status === 200) {
-          this.setState(() => ({cars: res.data}));
-          this.baseState.cars = res.data;
-          this.setState({filter: this.filter()});
-        }
-      }).catch(function (error) {
-        console.error(error);
-      });
     }
+
+    let filtered = this.getFilters(cars);
+    this.setState(() => ({cars: cars}));
+    this.setState(() => ({filter: filtered}));
+  }
+
+  fetchCars() {
+    axios.get('http://localhost:3000/cars', {
+      params: {
+        country: this.state.selected.country || '',
+        manufacturer: this.state.selected.manufacturer || '',
+        model: this.state.selected.model || '',
+        year: this.state.selected.year || '',
+        color: this.state.selected.color || ''
+      }
+    }).then(res => {
+      if (res.status === 200) {
+        this.setState(() => ({cars: res.data}));
+        this.baseState.cars = res.data;
+        this.setState({filter: this.getFilters()});
+      }
+    }).catch(function (error) {
+      console.error(error);
+    });
   }
 
   renderCars() {
@@ -66,53 +66,41 @@ class Cars extends Component {
     });
   }
 
-  filter(cars) {
-    let manufacturer = [];
-    let year = [];
-    let model = [];
-    let color = [];
+  getFilters(cars) {
+    let result = {
+      manufacturer: [],
+      year: [],
+      model: [],
+      color: []
+    };
 
     let state = cars || this.state.cars;
 
     state.forEach(function (obj) {
-      let i = manufacturer.findIndex(x => x === obj.manufacturer);
-      let j = year.findIndex(x => x === obj.year);
-      let k = model.findIndex(x => x === obj.model);
-      let l = color.findIndex(x => x === obj.color);
-
-      if (i <= -1) {
-        manufacturer.push(obj.manufacturer);
-      }
-
-      if (j <= -1) {
-        year.push(obj.year);
-      }
-
-      if (k <= -1) {
-        model.push(obj.model);
-      }
-
-      if (l <= -1) {
-        color.push(obj.color);
-      }
+      Object.keys(obj).forEach(key => {
+        if (result[key]) {
+          if (result[key].findIndex(x => x === obj[key]) <= -1) {
+            result[key].push(obj[key]);
+          }
+        }
+      });
     });
 
-    return {
-      manufacturer: manufacturer.sort(),
-      year: year.sort((a, b) => a - b),
-      model: model.sort(),
-      color: color.sort()
-    };
+    Object.values(result).forEach(arr => {
+      arr.sort();
+    });
+
+    return result;
   }
 
   handleChange = name => event => {
     this.state.selected[name] = event.target.value;
-    this.getCars();
+    this.getCarsList();
   };
 
   clearFilters() {
     this.state.selected = {color: "", model: "", manufacturer: "", year: ""};
-    this.getCars();
+    this.getCarsList();
   }
 
   render() {
